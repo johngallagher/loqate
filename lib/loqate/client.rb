@@ -38,8 +38,14 @@ module Loqate
 
       response = HTTP.headers(headers).get(configuration.host + endpoint, params: formatted_params)
 
-      body = JSON.parse(response.body)
-      APIResult.new(body.fetch('Items'))
+      if response.status.success?
+        body = JSON.parse(response.body)
+        APIResult.new(body.fetch('Items'))
+      else
+        APIResult.new([{"Error" => "-2", "Description" => "API returned failure code #{response.status}", "Cause" => "API returned error", "Resolution" => "Wait for a few moments and try again."}])
+      end
+    rescue JSON::ParserError => error
+      APIResult.new([{"Error" => "-3", "Description" => "API returned invalid JSON: #{error}", "Cause" => "Invalid JSON", "Resolution" => "Wait for a few moments and try again."}])
     end
 
     private
